@@ -25,6 +25,15 @@ export const UpdateTask = async (req, res, next) => {
     next(error);
   }
 };
+export const DeleteTask = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findByIdAndDelete(id);
+    return res.status(201);
+  } catch (error) {
+    next(error);
+  }
+};
 export const getTask = async (req, res, next) => {
   try {
     const { id } = req.params;
