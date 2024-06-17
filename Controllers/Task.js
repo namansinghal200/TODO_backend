@@ -50,14 +50,14 @@ export const getTasks = async (req, res, next) => {
     const { id } = req.user;
     var min, max;
     if (day === "today") {
-      min = dayjs().format("YYYY-MM-DD");
-      max = dayjs().format("YYYY-MM-DD");
-    } else if (day === "seven") {
-      min = dayjs().subtract(7, "day").format("YYYY-MM-DD");
-      max = dayjs().format("YYYY-MM-DD");
-    } else if (day === "thirty") {
-      min = dayjs().subtract(30, "day").format("YYYY-MM-DD");
-      max = dayjs().format("YYYY-MM-DD");
+      min = dayjs().startOf("day").toDate();
+      max = dayjs().endOf("day").toDate();
+    } else if (day === "week") {
+      min = dayjs().startOf("day").toDate();
+      max = dayjs().endOf("week").toDate();
+    } else if (day === "month") {
+      min = dayjs().startOf("day").toDate();
+      max = dayjs().endOf("month").toDate();
     }
     if (type) {
       var tasks = await Task.find({
