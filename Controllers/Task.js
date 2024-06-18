@@ -2,17 +2,39 @@ import Task from "../models/Task.js";
 import dayjs from "dayjs";
 
 // Create Task
+// export const CreateTask = async (req, res, next) => {
+//   try {
+//     const { id } = req.user;
+//     const completionDate = new Date(req.body.date);
+//     const task = new Task({ ...req.body, userId: id, date: completionDate });
+//     const saveTask = await task.save();
+//     return res.status(201).json({ task: saveTask });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+
+// Create Task
 export const CreateTask = async (req, res, next) => {
   try {
     const { id } = req.user;
     const completionDate = new Date(req.body.date);
-    const task = new Task({ ...req.body, userId: id, date: completionDate });
+    
+    // If collaborators are specified in the request body, use them; otherwise, default to an empty array
+    const collaborators = req.body.collaborators || [];
+    
+    // Combine the current user's ID with collaborators into a single array
+    const userId_array = [id, ...collaborators];
+    
+    const task = new Task({ ...req.body, userId: userId_array, date: completionDate });
     const saveTask = await task.save();
     return res.status(201).json({ task: saveTask });
   } catch (error) {
     next(error);
   }
 };
+
 
 // Update Task
 export const UpdateTask = async (req, res, next) => {
@@ -51,6 +73,36 @@ export const getTask = async (req, res, next) => {
   }
 };
 
+// // Get All Tasks
+// export const getTasks = async (req, res, next) => {
+//   try {
+//     const type = req.query?.type;
+//     const day = req.query?.day;
+//     const { id } = req.user;
+//     let min, max;
+//     if (day === "today") {
+//       min = dayjs().startOf("day").toDate();
+//       max = dayjs().endOf("day").toDate();
+//     } else if (day === "week") {
+//       min = dayjs().startOf("day").toDate();
+//       max = dayjs().endOf("week").toDate();
+//     } else if (day === "month") {
+//       min = dayjs().startOf("day").toDate();
+//       max = dayjs().endOf("month").toDate();
+//     }
+//     const filter = {
+//       userId: id,
+//       ...(type && { type }),
+//       ...(day && { date: { $gte: new Date(min), $lte: new Date(max) } }),
+//     };
+//     const tasks = await Task.find(filter);
+//     return res.status(201).json({ tasks });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
+
 // Get All Tasks
 export const getTasks = async (req, res, next) => {
   try {
@@ -68,17 +120,21 @@ export const getTasks = async (req, res, next) => {
       min = dayjs().startOf("day").toDate();
       max = dayjs().endOf("month").toDate();
     }
+
+    // Modify the filter to check if the user ID is in the userId array
     const filter = {
-      userId: id,
+      userId: { $in: [id] }, // Check if the user ID is in the userId array
       ...(type && { type }),
       ...(day && { date: { $gte: new Date(min), $lte: new Date(max) } }),
     };
+    
     const tasks = await Task.find(filter);
-    return res.status(201).json({ tasks });
+    return res.status(201).json({ tasks }); 
   } catch (err) {
     next(err);
   }
 };
+
 
 export const getSubtasks = async (req, res, next) => {
   try {
