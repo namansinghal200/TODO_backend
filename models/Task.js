@@ -51,7 +51,7 @@ const SubtaskSchema = new mongoose.Schema({
 const TaskSchema = new mongoose.Schema(
   {
     userId: {
-      type: String,
+      type: [String], //made it array
       required: true,
     },
     type: {
