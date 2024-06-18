@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import path from "path";
 import UserRoutes from "./Routes/User.js";
 import TaskRoutes from "./Routes/Task.js";
+// import newRoutes from "./Routes/UserRoute.js";
 import { Register } from "./Controllers/User.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -38,6 +39,7 @@ const upload = multer({ storage });
 app.use("/auth/register", upload.single("picture"), Register);
 app.use("/auth", UserRoutes);
 app.use("/task", TaskRoutes);
+// app.use("/user", newRoutes);
 
 app.use((err, req, res, next) => {
   const status = err.status || 500;
