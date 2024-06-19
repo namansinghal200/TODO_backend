@@ -1,4 +1,5 @@
 import Task from "../models/Task.js";
+import User from "../models/User.js";
 import dayjs from "dayjs";
 
 // Create Task
@@ -35,21 +36,88 @@ export const CreateTask = async (req, res, next) => {
   }
 };
 
+//this is to completely disregard the current collaborators and replace them with the new ones
+// // Update Task
+// export const UpdateTask = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
+//     const task = await Task.findByIdAndUpdate(
+//       id,
+//       { ...req.body },
+//       { new: true }
+//     );
+//     return res.status(201).json({ task });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
+// // Update Task
+// export const UpdateTask = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
+    
+//     // Get the current task
+//     const currentTask = await Task.findById(id);
+    
+//     if (!currentTask) {
+//       return res.status(404).json({ message: "Task not found" });
+//     }
+    
+//     // If collaborators are specified in the request body, use them; otherwise, use the existing collaborators
+//     const collaborators = req.body.collaborators || currentTask.userId.filter(userId => userId !== req.user.id);
+    
+//     // Combine the current user's ID with collaborators into a single array
+//     const userId_array = [req.user.id, ...collaborators];
+    
+//     // Update the task with the new details and the combined userId array
+//     const updatedTask = await Task.findByIdAndUpdate(
+//       id,
+//       { ...req.body, userId: userId_array },
+//       { new: true }
+//     );
+    
+//     return res.status(200).json({ task: updatedTask });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+
+//this is if we wanna keep the current collaborators and add the new ones
 // Update Task
 export const UpdateTask = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const task = await Task.findByIdAndUpdate(
-      id,
-      { ...req.body },
-      { new: true }
-    );
-    return res.status(201).json({ task });
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Merge existing collaborators with new ones from the request body
+    const existingCollaborators = task.userId || [];
+    const newCollaborators = req.body.collaborators || [];
+    const updatedCollaborators = [...new Set([...existingCollaborators, ...newCollaborators])];
+
+    // Update the task with the merged collaborators array
+    task.set({
+      ...req.body,
+      userId: updatedCollaborators,
+    });
+
+    const updatedTask = await task.save();
+
+    return res.status(200).json({ task: updatedTask });
   } catch (error) {
     next(error);
   }
 };
+
+
+
+
+
 
 // Delete Task
 export const DeleteTask = async (req, res, next) => {
@@ -218,3 +286,56 @@ export const deleteSubtask = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+
+export const getCollaborators = async (req, res, next) => {
+  try {
+    const { taskId } = req.params;
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Fetch emails for all userIds
+    // const users = await User.find({ _id: { $in: task.userId } });
+    const filteredUserIds = task.userId.filter(id => id.trim() !== "");
+    const users = await User.find({ _id: { $in: filteredUserIds } });
+    const collaborators = users.map(user => ({ userId: user._id, email: user.email }));
+
+    return res.status(200).json({ collaborators });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const deleteCollaborator = async (req, res, next) => {
+  try {
+    const { taskId, userId } = req.params;
+
+    // Find the task by taskId
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Remove the userId from the task's userId array
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      { $pull: { userId: userId } },
+      { new: true }
+    );
+
+    // Check if the userId was successfully removed
+    if (!updatedTask) {
+      return res.status(404).json({ message: "Collaborator not found" });
+    }
+
+    return res.status(200).json({ task: updatedTask });
+  } catch (error) {
+    next(error);
+  }
+};
+

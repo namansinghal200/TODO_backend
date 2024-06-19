@@ -10,6 +10,8 @@ import {
   updateSubtask,
   deleteSubtask,
   getSubtasks,
+  getCollaborators,
+  deleteCollaborator
 } from "../Controllers/Task.js";
 const router = express.Router();
 
@@ -23,5 +25,9 @@ router.post("/:taskId/subtask", verifyJwtToken, createSubtask);
 router.get("/:taskId/subtask", verifyJwtToken, getSubtasks);
 router.put("/:taskId/subtask/:subtaskId", verifyJwtToken, updateSubtask);
 router.delete("/:taskId/subtask/:subtaskId", verifyJwtToken, deleteSubtask);
+
+
+router.get("/:taskId/collaborators", verifyJwtToken, getCollaborators);
+router.delete("/:taskId/collaborator/:userId", verifyJwtToken, deleteCollaborator);
 
 export default router;
